@@ -1,0 +1,91 @@
+---
+title: "Analysis of 2006-2012 NYC Students Math Test Results by Grade and District"
+author: "Jacob Sung"
+date: "5/29/2021"
+runtime: shiny
+output: html_document
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+library(here)
+library(utils)
+library(tidyverse)
+library(shiny)
+
+```
+
+## Introduction
+
+The purpose of this notebook is to gain some initial exposure to data preparation, processing, visualization, and data exploration alongside the relevant libraries/toolsets required. As this is my first attempt at creating such a project, there are bound to be beginner errors contained within the notebook. Hopefully, after more practice, I can improve on the techniques and skills required, as well as adopt the common best practices for succesfully creating an effective EDA report.
+
+### Processing and Preparation
+
+We inspect data provided by the City of New York to analyze the improvement of Mathematics Testing scores from the year 2006-2012. The data is collected from students in grades "3" through "6". 
+
+```{r}
+df.raw <- read.csv(here("2006_-_2012__Math_Test_Results_-_District_-_All_Students.csv"),
+               fileEncoding="UTF-8-BOM")
+glimpse(df.raw)
+```
+
+Notice how both $\texttt{District}$ and $\texttt{Year}$ are being treated as quantitative variables. For the purposes of our analysis, we treat $\texttt{Year}$ as a factor variable, and convert $\texttt{District}$ also into a factor variable.
+
+```{r}
+df.raw1 <- df.raw %>%
+ mutate_at(vars(District, Year), factor)
+
+glimpse(df.raw1)
+```
+
+Perfect. Let's take a look at the data that we have:
+
+
+```{r}
+renderTable({head(df.raw1)})
+```
+
+
+
+
+There are a couple things that we should clean up. Notice that for each district, there are cumulative statistics for each of the grade levels between the years 2006-2012, which will not be useful to include in our data. Further, the final two columns provide the total number of students with both (FILL OUT AFTER FINDING OUT MORE), which would be redundant to include. We remove the rows which include our cumulative data as well as these two columns, while editing the names of the variables to something a little more clear:
+
+
+
+
+```{r echo= TRUE}
+df <- df.raw1 %>%
+  filter(Grade != "All Grades") %>%
+  select(-c(Demographic,Num.Level.3.and.4,Pct.Level.3.and.4)) %>%
+  rename(c('#Level_1' = 'Num.Level.1', '%Level_1' = 'Pct.Level.1',
+           '#Level_2' = 'Num.Level.2', '%Level_2' = 'Pct.Level.2',
+           '#Level_3' = 'Num.Level.3', '%Level_3' = 'Pct.Level.3',
+           '#Level_4' = 'Num.Level.4', '%Level_4' = 'Pct.Level.4',
+           'Mean_Score' = 'Mean.Scale.Score', '#Students_Tested' = 'Number.Tested'))
+renderTable({head(df)})
+```
+
+
+
+Our data is all prepared!
+
+
+
+
+### Visualizations
+
+```{r echo = FALSE}
+
+
+selectInput("n_breaks", label = "Number of bins:",
+              choices = c(10, 20, 35, 50), selected = 20)
+
+sliderInput("bw_adjust", label = "Bandwidth adjustment:",
+              min = 0.2, max = 2, value = 1, step = 0.2)
+
+```
+
+
+
+
+
